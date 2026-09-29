@@ -115,7 +115,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
             {layout.panels.map((panel, i) => (
               <section className="panel" key={panel}>
                 <div className="panelhead"><span>{panel}</span>{i === 0 && <BarChart3 size={14} />}</div>
-                {active === "Users" && panel === "USER DIRECTORY" ? <UsersPanel users={overview.userDirectory} />
+                {active === "Users" && panel === "USER DIRECTORY" ? <UsersPanel users={overview.userDirectory} onSelect={setSelectedUserId} />
                   : active === "Users" && panel === "USER DETAIL" ? <UserDetailPanel user={selectedUser} />
                   : active === "Overview" && panel === "ACQUISITION FUNNEL" ? <OverviewFunnel stages={overview.funnel} />
                   : active === "Overview" && panel === "SYSTEM STATUS" ? <OverviewSystem system={overview.system} />

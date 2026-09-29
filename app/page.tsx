@@ -1,5 +1,16 @@
-"use client";
-import {useState} from "react";
-import {Activity,BarChart3,ChevronLeft,ChevronRight,FolderKanban,LayoutDashboard,Megaphone,Settings2,ShieldCheck,Users} from "lucide-react";
-const nav=[["Overview",LayoutDashboard],["Users",Users],["Projects",FolderKanban],["Outreach",Megaphone],["System",ShieldCheck]] as const;
-export default function Home(){const[collapsed,setCollapsed]=useState(false);const[active,setActive]=useState("Overview");return <main><header className="terminal"><div className="terminal-left"><i className="dot"/><span>MARLO</span><span className="muted">/ PLATFORM</span></div><div className="terminal-right"><span>CONTROL PLANE</span><span className="muted">PHASE 1</span></div></header><div className="layout"><aside className={collapsed?"rail collapsed":"rail"}><button className="collapse" onClick={()=>setCollapsed(!collapsed)}>{collapsed?<ChevronRight size={15}/>:<ChevronLeft size={15}/>}</button><nav className="nav">{nav.map(([label,Icon])=><button key={label} className={active===label?"item active":"item"} onClick={()=>setActive(label)}><span className="icon"><Icon size={15}/></span><span>{label}</span></button>)}</nav><div className="nav bottom"><button className="item"><span className="icon"><Activity size={15}/></span><span>Activity</span></button><button className="item"><span className="icon"><Settings2 size={15}/></span><span>Settings</span></button></div></aside><section className="workspace"><div className="head"><div><div className="eyebrow">PLATFORM / {active.toUpperCase()}</div><h1>{active}</h1></div><div className="operator"><i className="dot"/> operator</div></div><div className="stats">{["Users","Projects","Leads","Health"].map(x=><article className="panel stat" key={x}><div className="label">{x}</div><div className="value">—</div><div className="note">Awaiting live platform data</div></article>)}</div><div className="grid"><section className="panel"><div className="panelhead"><span>PLATFORM ACTIVITY</span><BarChart3 size={14}/></div><div className="empty"><strong>Control plane initialized</strong><span>Phase 1 shell is ready. Connect live data next.</span></div></section><section className="panel"><div className="panelhead"><span>SYSTEM STATUS</span><span style={{color:"#00ab92"}}>READY</span></div><div className="rows">{["Supabase","Vercel","PageSpeed","Tavily","LLM"].map(x=><div className="row" key={x}><span>{x}</span><span className="status">PENDING</span></div>)}</div></section></div></section></div></main>}
+import { requireAdmin } from "@/lib/admin";
+import PlatformShell from "./platform-shell";
+
+export default async function Home() {
+  const { user, authorized } = await requireAdmin();
+
+  if (!user) {
+    return <main className="access"><div className="access-card"><div className="eyebrow">MARLO / PLATFORM</div><h1>Authentication required</h1><p>Sign in to the Marlo application, then return to the platform control plane.</p></div></main>;
+  }
+
+  if (!authorized) {
+    return <main className="access"><div className="access-card"><div className="eyebrow">MARLO / PLATFORM</div><h1>403 — Admin access required</h1><p>Your account is authenticated but is not in the platform administrator allowlist.</p></div></main>;
+  }
+
+  return <PlatformShell userEmail={user.email ?? "operator"} />;
+}

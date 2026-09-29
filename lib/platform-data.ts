@@ -68,6 +68,7 @@ export type PlatformOverview = {
     errors: number;
     adminActions: number;
   };
+  settings: SettingsStatus;
   funnel: FunnelStage[];
   system: { supabase: "healthy" | "error"; database: "healthy" | "error" };
 };

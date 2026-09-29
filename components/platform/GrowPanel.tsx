@@ -3,9 +3,9 @@ import type { GrowStatus } from "@/lib/platform-data";
 export function GrowPanel({ grow }: { grow: GrowStatus }) {
   const rows = [
     ["Lead pool", grow.leads],
-    ["Email ready", grow.ready],
-    ["Sent", grow.sent],
-    ["Replies", grow.replies],
+    ["Email-ready", grow.emailReady],
+    ["Outreach sent", grow.sent],
+    ["Replies detected", grow.replies],
     ["Marketing leads", grow.marketingLeads],
   ] as const;
 
@@ -17,9 +17,6 @@ export function GrowPanel({ grow }: { grow: GrowStatus }) {
           <strong>{value}</strong>
         </div>
       ))}
-      <div className="grow-note">
-        Outreach state is read from existing lead email/reply fields. Social execution is intentionally not connected yet.
-      </div>
     </div>
   );
 }

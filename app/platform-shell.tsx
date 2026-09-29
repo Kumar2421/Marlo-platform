@@ -9,14 +9,14 @@ import type { PlatformOverview } from "@/lib/platform-data";
 import { OverviewFunnel } from "@/components/platform/OverviewFunnel";
 import { OverviewSystem } from "@/components/platform/OverviewSystem";
 import { BuildPanel } from "@/components/platform/BuildPanel";
+import { MonitorPanel } from "@/components/platform/MonitorPanel";
 
 const nav = [
   ["Overview", LayoutDashboard],
   ["Build", FolderKanban],
-  ["Users", Users],
-  ["Projects", FolderKanban],
-  ["Outreach", Megaphone],
-  ["System", ShieldCheck],
+  ["Monitor", ShieldCheck],
+  ["Grow", Megaphone],
+  ["Fix", Activity],
   ["Activity", Activity],
   ["Settings", Settings2],
 ] as const;
@@ -24,6 +24,9 @@ const nav = [
 const skeletons: Record<string, { stats: string[]; panels: string[] }> = {
   Overview: { stats: ["Users", "Projects", "Leads", "Usage"], panels: ["ACQUISITION FUNNEL", "SYSTEM STATUS"] },
   Build: { stats: ["CI", "Latest build", "Failures", "Deployment"], panels: ["BUILD PIPELINE", "RELEASE ACTIVITY"] },
+  Monitor: { stats: ["Supabase", "Database", "GitHub", "Vercel"], panels: ["SYSTEM HEALTH", "HEALTH CHECK"] },
+  Grow: { stats: ["Users", "Leads", "Funnel", "Outreach"], panels: ["GROWTH PIPELINE", "RECENT ACTIVITY"] },
+  Fix: { stats: ["Failures", "Incidents", "Retries", "Blocked"], panels: ["FIX QUEUE", "RECOVERY ACTIVITY"] },
   Users: { stats: ["Total users", "New users", "Active users", "Plans"], panels: ["USER DIRECTORY", "USER ACTIVITY"] },
   Projects: { stats: ["Projects", "Active", "Analyses", "Crawls"], panels: ["PROJECT DIRECTORY", "PROJECT ACTIVITY"] },
   Outreach: { stats: ["Leads", "Ready", "Sent", "Replies"], panels: ["OUTREACH PIPELINE", "RECENT ACTIVITY"] },
@@ -44,6 +47,7 @@ export default function PlatformShell({
   const layout = skeletons[active];
   const overviewValues = [overview.users, overview.projects, overview.leads, overview.usageEvents];
   const buildValues = [overview.build.ci.toUpperCase(), overview.build.latestRun, overview.build.failures, overview.build.deployment === "connected" ? "CONNECTED" : "NOT SET"];
+  const monitorValues = [overview.monitor.supabase.toUpperCase(), overview.monitor.database.toUpperCase(), overview.monitor.github.toUpperCase(), overview.monitor.vercel.replaceAll("_", " ").toUpperCase()];
 
   return (
     <main className="platform-shell">
@@ -94,13 +98,15 @@ export default function PlatformShell({
             {layout.stats.map((label, i) => (
               <article className="panel stat" key={label}>
                 <div className="label">{label}</div>
-                <div className="value">{active === "Overview" ? overviewValues[i] : active === "Build" ? buildValues[i] : "—"}</div>
+                <div className="value">{active === "Overview" ? overviewValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : "—"}</div>
                 <div className="note">
                   {active === "Overview"
                     ? ["Registered platform users", "Active customer projects", "Customer-generated leads", "Recorded agent runs"][i]
                     : active === "Build"
                       ? ["GitHub Actions state", "Latest workflow", "Recent failed runs", "Vercel integration"][i]
-                      : "Skeleton — data layer next"}
+                      : active === "Monitor"
+                        ? ["Supabase connection", "Database access", "CI availability", "Deployment integration"][i]
+                        : "Skeleton — data layer next"}
                 </div>
               </article>
             ))}
@@ -119,6 +125,8 @@ export default function PlatformShell({
                   <OverviewSystem system={overview.system} />
                 ) : active === "Build" && panel === "BUILD PIPELINE" ? (
                   <BuildPanel build={overview.build} />
+                ) : active === "Monitor" && panel === "SYSTEM HEALTH" ? (
+                  <MonitorPanel monitor={overview.monitor} />
                 ) : (
                   <div className="empty">
                     <strong>{panel}</strong>

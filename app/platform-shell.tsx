@@ -11,6 +11,7 @@ import { OverviewSystem } from "@/components/platform/OverviewSystem";
 import { BuildPanel } from "@/components/platform/BuildPanel";
 import { MonitorPanel } from "@/components/platform/MonitorPanel";
 import { GrowPanel } from "@/components/platform/GrowPanel";
+import { LeadResearchPanel } from "@/components/platform/LeadResearchPanel";
 import { FixPanel } from "@/components/platform/FixPanel";
 import { ActivityPanel } from "@/components/platform/ActivityPanel";
 import { AccessControlPanel, SettingsPanel } from "@/components/platform/SettingsPanel";
@@ -35,7 +36,7 @@ const skeletons: Record<string, { stats: string[]; panels: string[] }> = {
   Overview: { stats: ["Users", "Projects", "Leads", "Usage"], panels: ["ACQUISITION FUNNEL", "SYSTEM STATUS"] },
   Build: { stats: ["CI", "Latest build", "Failures", "Deployment"], panels: ["BUILD PIPELINE", "RELEASE ACTIVITY"] },
   Monitor: { stats: ["Supabase", "Database", "GitHub", "Vercel"], panels: ["SYSTEM HEALTH", "HEALTH CHECK"] },
-  Grow: { stats: ["Leads", "Email ready", "Sent", "Replies"], panels: ["OUTREACH PIPELINE", "MARKETING LEADS"] },
+  Grow: { stats: ["Platform leads", "Email ready", "Sent", "Replies"], panels: ["LEAD RESEARCH", "OUTREACH PIPELINE"] },
   Fix: { stats: ["Failed", "Critical", "Fixing", "Pending"], panels: ["FIX QUEUE", "RECOVERY ACTIVITY"] },
   Activity: { stats: ["Events", "Today", "Errors", "Admin actions"], panels: ["ACTIVITY STREAM", "EVENT FILTERS"] },
   Settings: { stats: ["Admins", "Access", "Environment", "Config"], panels: ["PLATFORM SETTINGS", "ACCESS CONTROL"] },
@@ -104,7 +105,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
                       : active === "Monitor"
                         ? ["Supabase connection", "Database access", "CI availability", "Deployment integration"][i]
                         : active === "Grow"
-                          ? ["Customer lead pool", "Leads with email", "Outreach sent", "Detected replies"][i]
+                          ? ["Platform acquisition leads", "Leads with sourced email", "Outreach sent", "Detected replies"][i]
                           : active === "Fix"
                             ? ["Findings marked failed", "Active critical findings", "Findings being fixed", "Pending or failed fixes"][i]
                             : active === "Activity"
@@ -129,6 +130,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
                   : active === "Overview" && panel === "SYSTEM STATUS" ? <OverviewSystem system={overview.system} />
                   : active === "Build" && panel === "BUILD PIPELINE" ? <BuildPanel build={overview.build} />
                   : active === "Monitor" && panel === "SYSTEM HEALTH" ? <MonitorPanel monitor={overview.monitor} />
+                  : active === "Grow" && panel === "LEAD RESEARCH" ? <LeadResearchPanel />
                   : active === "Grow" && panel === "OUTREACH PIPELINE" ? <GrowPanel grow={overview.grow} />
                   : active === "Grow" && panel === "MARKETING LEADS" ? (
                     <div className="grow-panel"><div className="grow-row"><span>Inbound marketing leads</span><strong>{overview.grow.marketingLeads}</strong></div><div className="grow-note">Social connections and automated social execution remain a later integration layer.</div></div>

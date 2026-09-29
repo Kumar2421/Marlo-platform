@@ -42,6 +42,8 @@ export type ActivityEvent = {
   createdAt: string;
 };
 
+export type PlatformUser = { id: string; email: string | null; createdAt: string; projects: number };
+
 export type SettingsStatus = {
   admins: number;
   supabase: boolean;
@@ -52,6 +54,7 @@ export type SettingsStatus = {
 
 export type PlatformOverview = {
   users: number;
+  userDirectory: PlatformUser[];
   projects: number;
   leads: number;
   funnelEvents: number;
@@ -75,6 +78,16 @@ export type PlatformOverview = {
 
 export async function getPlatformOverview(): Promise<PlatformOverview> {
   const db = createAdminClient();
+  const [{ data: authUsers, error: authUsersError }, { data: projectRows, error: projectRowsError }] = await Promise.all([
+    db.auth.admin.listUsers({ page: 1, perPage: 100 }),
+    db.from("projects").select("owner_id"),
+  ]);
+  if (authUsersError) throw new Error(authUsersError.message);
+  if (projectRowsError) throw new Error(projectRowsError.message);
+  const projectCounts = new Map<string, number>();
+  for (const project of projectRows ?? []) projectCounts.set(project.owner_id, (projectCounts.get(project.owner_id) ?? 0) + 1);
+  const userDirectory: PlatformUser[] = (authUsers?.users ?? []).map((user) => ({ id: user.id, email: user.email ?? null, createdAt: user.created_at, projects: projectCounts.get(user.id) ?? 0 }));
+
   const events = ["audit_started", "audit_completed", "signup_cta_clicked", "signup_completed"];
 
   const [users, projects, leads, funnelEvents, audits, signups, usage, ...funnelQueries] = await Promise.all([
@@ -162,6 +175,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
 
   return {
     users: users.count ?? 0,
+    userDirectory,
     projects: projects.count ?? 0,
     leads: leads.count ?? 0,
     funnelEvents: funnelEvents.count ?? 0,

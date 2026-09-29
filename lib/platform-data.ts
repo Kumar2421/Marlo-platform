@@ -26,6 +26,13 @@ export type GrowStatus = {
   marketingLeads: number;
 };
 
+export type FixStatus = {
+  failed: number;
+  critical: number;
+  fixing: number;
+  pending: number;
+};
+
 export type PlatformOverview = {
   users: number;
   projects: number;
@@ -37,6 +44,7 @@ export type PlatformOverview = {
   build: BuildStatus;
   monitor: MonitorStatus;
   grow: GrowStatus;
+  fix: FixStatus;
   funnel: FunnelStage[];
   system: { supabase: "healthy" | "error"; database: "healthy" | "error" };
 };
@@ -67,6 +75,15 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
   ]);
   const growErrors = [emailReady, sent, replies, marketingLeads].filter((x) => x.error);
   if (growErrors.length) throw new Error(growErrors[0].error?.message ?? "Growth data query failed");
+
+  const [failedFindings, criticalFindings, fixingFindings, pendingFixes] = await Promise.all([
+    db.from("findings").select("id", { count: "exact", head: true }).eq("status", "failed"),
+    db.from("findings").select("id", { count: "exact", head: true }).eq("severity", "critical").not("status", "in", "(fixed,verified)"),
+    db.from("findings").select("id", { count: "exact", head: true }).eq("status", "fixing"),
+    db.from("code_fixes").select("id", { count: "exact", head: true }).in("status", ["pending", "failed"]),
+  ]);
+  const fixErrors = [failedFindings, criticalFindings, fixingFindings, pendingFixes].filter((x) => x.error);
+  if (fixErrors.length) throw new Error(fixErrors[0].error?.message ?? "Fix data query failed");
 
   let build: BuildStatus = { ci: "unknown", latestRun: "Unavailable", latestRunUrl: null, failures: 0, deployment: process.env.VERCEL_TOKEN ? "connected" : "not_configured" };
   try {
@@ -106,6 +123,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     build,
     monitor,
     grow: { leads: leads.count ?? 0, emailReady: emailReady.count ?? 0, sent: sent.count ?? 0, replies: replies.count ?? 0, marketingLeads: marketingLeads.count ?? 0 },
+    fix: { failed: failedFindings.count ?? 0, critical: criticalFindings.count ?? 0, fixing: fixingFindings.count ?? 0, pending: pendingFixes.count ?? 0 },
     funnel: events.map((event, index) => ({ label: event.replaceAll("_", " "), count: funnelCounts[index], rate: base ? Math.round((funnelCounts[index] / base) * 100) : 0 })),
     system: { supabase: "healthy", database: "healthy" },
   };

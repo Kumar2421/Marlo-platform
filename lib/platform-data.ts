@@ -112,9 +112,10 @@ export async function getPlatformOverview(adminUserId?: string): Promise<Platfor
   if (errors.length) throw new Error(errors[0].error?.message ?? "Platform data query failed");
 
   const [platformLeads, emailReady, sent, replies, marketingLeads] = await Promise.all([
-    db.from("leads").select("id", { count: "exact", head: true }).not("email", "is", null),
-    db.from("leads").select("id", { count: "exact", head: true }).not("emailed_at", "is", null),
-    db.from("leads").select("id", { count: "exact", head: true }).not("last_reply_at", "is", null),
+    db.from("leads").select("id", { count: "exact", head: true }).eq("scope", "platform"),
+    db.from("leads").select("id", { count: "exact", head: true }).eq("scope", "platform").not("email", "is", null),
+    db.from("leads").select("id", { count: "exact", head: true }).eq("scope", "platform").not("emailed_at", "is", null),
+    db.from("leads").select("id", { count: "exact", head: true }).eq("scope", "platform").not("last_reply_at", "is", null),
     db.from("marketing_leads").select("id", { count: "exact", head: true }),
   ]);
   const growErrors = [platformLeads, emailReady, sent, replies, marketingLeads].filter((x) => x.error);

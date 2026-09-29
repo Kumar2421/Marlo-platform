@@ -1,6 +1,6 @@
 import type { PlatformUser } from "@/lib/platform-data";
 
-export function UsersPanel({ users }: { users: PlatformUser[] }) {
+export function UsersPanel({ users, onSelect }: { users: PlatformUser[]; onSelect?: (id: string) => void }) {
   if (!users.length) {
     return <div className="empty users-empty"><strong>USER DIRECTORY</strong><span>No authenticated users found.</span></div>;
   }
@@ -8,7 +8,7 @@ export function UsersPanel({ users }: { users: PlatformUser[] }) {
   return (
     <div className="users-panel">
       {users.map((user) => (
-        <div className="user-row" key={user.id}>
+        <button className="user-row" key={user.id} onClick={() => onSelect?.(user.id)}>
           <div className="user-main">
             <strong>{user.email ?? "No email"}</strong>
             <span>{user.id.slice(0, 8)} · joined {new Date(user.createdAt).toLocaleDateString()}</span>

@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     }));
     const db = createAdminClient();
     if (rows.length) {
-      const { error } = await db.from("leads").upsert(rows, { onConflict: "dedupe_key", ignoreDuplicates: true });
+      const { error } = await db.from("leads").upsert(rows, { onConflict: "scope,dedupe_key", ignoreDuplicates: true });
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     }
     const { data: saved, error: readError } = await db.from("leads")

@@ -17,8 +17,7 @@ export function UsersPanel({ users, onSelect }: { users: PlatformUser[]; onSelec
             <strong>{user.projects}</strong>
             <span>projects</span>
           </div>
-        </div>
-      </button>
+        </button>
       ))}
     </div>
   );

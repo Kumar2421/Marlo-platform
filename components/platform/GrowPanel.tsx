@@ -24,6 +24,7 @@ export function GrowPanel({ grow }: { grow: GrowStatus }) {
   const [message, setMessage] = useState("Hi {{name}},\n\nI came across {{company}} and wanted to reach out about a potential growth opportunity.\n\nWould you be open to a short conversation?\n\nBest,");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
+  const [checkingReplies, setCheckingReplies] = useState(false);
 
   async function load() {
     const response = await fetch("/api/grow/outreach", { cache: "no-store" });
@@ -36,6 +37,22 @@ export function GrowPanel({ grow }: { grow: GrowStatus }) {
   useEffect(() => { void load(); }, []);
 
   const sendable = useMemo(() => leads.filter((lead) => lead.email && !lead.emailed_at), [leads]);
+
+  async function checkReplies() {
+    setCheckingReplies(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/grow/replies", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Reply check failed.");
+      setStatus(`${data.replies ?? 0} new repl${data.replies === 1 ? "y" : "ies"} detected across ${data.checked ?? 0} threads.`);
+      await load();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Reply check failed.");
+    } finally {
+      setCheckingReplies(false);
+    }
+  }
 
   function toggle(id: string) {
     setSelected((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
@@ -90,7 +107,12 @@ export function GrowPanel({ grow }: { grow: GrowStatus }) {
       <div className="outreach">
         <div className="outreach-head">
           <div><strong>OUTREACH PIPELINE</strong><span>{gmail ? `GMAIL · ${gmail}` : "GMAIL NOT CONNECTED"}</span></div>
-          <button type="button" onClick={() => void load()}>REFRESH</button>
+          <div className="outreach-head-actions">
+            <button type="button" disabled={checkingReplies} onClick={() => void checkReplies()}>
+              {checkingReplies ? "CHECKING…" : "CHECK REPLIES"}
+            </button>
+            <button type="button" onClick={() => void load()}>REFRESH</button>
+          </div>
         </div>
 
         {!gmail && <div className="outreach-note">Connect Gmail in Settings before sending. Research remains available without Gmail.</div>}
@@ -122,7 +144,7 @@ export function GrowPanel({ grow }: { grow: GrowStatus }) {
               </div>
               <div className="lead-meta">
                 <strong>{lead.email || "NO EMAIL"}</strong>
-                <span>{lead.emailed_at ? "SENT" : lead.last_reply_at ? "REPLIED" : lead.email_quality || "SOURCE GAP"}</span>
+                <span>{lead.last_reply_at ? `REPLIED · ${new Date(lead.last_reply_at).toLocaleString()}` : lead.emailed_at ? "SENT" : lead.email_quality || "SOURCE GAP"}</span>
               </div>
             </label>
           ))}

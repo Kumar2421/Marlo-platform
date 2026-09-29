@@ -66,3 +66,5 @@ h1{font-size:22px;font-weight:500;line-height:1.2;margin:4px 0 0}
   .mobile-icon{display:flex;width:30px;height:30px;align-items:center;justify-content:center;border-radius:50%}
   .mobile-item.active .mobile-icon{background:#f0f1f2;color:#00ab92}
 }
+
+.overview-funnel{padding:18px 14px;display:flex;flex-direction:column;gap:16px}.funnel-row{display:grid;gap:7px}.funnel-meta{display:flex;justify-content:space-between;gap:12px;font:500 10px var(--font-jetbrains),monospace;color:#777;text-transform:uppercase}.funnel-track{height:6px;background:#f1f1f1;border-radius:99px;overflow:hidden}.funnel-fill{height:100%;background:#00ab92;border-radius:99px}.system-list{padding:6px 14px}.system-row{min-height:48px;border-bottom:1px solid #ededed;display:flex;align-items:center;justify-content:space-between;font-size:12px}.system-row:last-child{border-bottom:0}.system-state{display:flex;align-items:center;gap:7px;font:500 10px var(--font-jetbrains),monospace;color:#777}.system-state .dot{width:5px;height:5px}.system-list{height:100%}

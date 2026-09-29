@@ -33,6 +33,15 @@ export type FixStatus = {
   pending: number;
 };
 
+export type ActivityEvent = {
+  id: string;
+  label: string;
+  source: string;
+  severity: "info" | "warning" | "error";
+  projectId: string | null;
+  createdAt: string;
+};
+
 export type PlatformOverview = {
   users: number;
   projects: number;
@@ -45,6 +54,12 @@ export type PlatformOverview = {
   monitor: MonitorStatus;
   grow: GrowStatus;
   fix: FixStatus;
+  activity: {
+    events: ActivityEvent[];
+    today: number;
+    errors: number;
+    adminActions: number;
+  };
   funnel: FunnelStage[];
   system: { supabase: "healthy" | "error"; database: "healthy" | "error" };
 };
@@ -76,13 +91,15 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
   const growErrors = [emailReady, sent, replies, marketingLeads].filter((x) => x.error);
   if (growErrors.length) throw new Error(growErrors[0].error?.message ?? "Growth data query failed");
 
-  const [failedFindings, criticalFindings, fixingFindings, pendingFixes] = await Promise.all([
+  const [failedFindings, criticalFindings, fixingFindings, pendingFixes, activityUsage, activityFunnel] = await Promise.all([
     db.from("findings").select("id", { count: "exact", head: true }).eq("status", "failed"),
     db.from("findings").select("id", { count: "exact", head: true }).eq("severity", "critical").not("status", "in", "(fixed,verified)"),
     db.from("findings").select("id", { count: "exact", head: true }).eq("status", "fixing"),
     db.from("code_fixes").select("id", { count: "exact", head: true }).in("status", ["pending", "failed"]),
+    db.from("usage_events").select("id,user_id,project_id,agent_type,status,created_at").order("created_at", { ascending: false }).limit(20),
+    db.from("marketing_funnel_events").select("id,event,created_at").order("created_at", { ascending: false }).limit(20),
   ]);
-  const fixErrors = [failedFindings, criticalFindings, fixingFindings, pendingFixes].filter((x) => x.error);
+  const fixErrors = [failedFindings, criticalFindings, fixingFindings, pendingFixes, activityUsage, activityFunnel].filter((x) => x.error);
   if (fixErrors.length) throw new Error(fixErrors[0].error?.message ?? "Fix data query failed");
 
   let build: BuildStatus = { ci: "unknown", latestRun: "Unavailable", latestRunUrl: null, failures: 0, deployment: process.env.VERCEL_TOKEN ? "connected" : "not_configured" };
@@ -109,6 +126,29 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     vercel: process.env.VERCEL_TOKEN ? "configured" : "not_configured",
     checkedAt: new Date().toISOString(),
   };
+  const now = Date.now();
+  const dayStart = new Date();
+  dayStart.setHours(0, 0, 0, 0);
+  const activityEvents: ActivityEvent[] = [
+    ...(activityUsage.data ?? []).map((event: { id: string; user_id: string; project_id: string | null; agent_type: string; status: string; created_at: string }) => ({
+      id: `usage-${event.id}`,
+      label: `${event.agent_type} · ${event.status}`,
+      source: "usage_events",
+      severity: event.status === "failed" ? "error" as const : "info" as const,
+      projectId: event.project_id,
+      createdAt: event.created_at,
+    })),
+    ...(activityFunnel.data ?? []).map((event: { id: string; event: string; created_at: string }) => ({
+      id: `funnel-${event.id}`,
+      label: event.event.replaceAll("_", " "),
+      source: "marketing_funnel_events",
+      severity: event.event === "audit_failed" ? "error" as const : "info" as const,
+      projectId: null,
+      createdAt: event.created_at,
+    })),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 30);
+  const today = activityEvents.filter((event) => new Date(event.createdAt).getTime() >= dayStart.getTime()).length;
+  const errors = activityEvents.filter((event) => event.severity === "error").length;
   const funnelCounts = funnelQueries.map((query) => query.count ?? 0);
   const base = funnelCounts[0] || 0;
 
@@ -124,6 +164,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     monitor,
     grow: { leads: leads.count ?? 0, emailReady: emailReady.count ?? 0, sent: sent.count ?? 0, replies: replies.count ?? 0, marketingLeads: marketingLeads.count ?? 0 },
     fix: { failed: failedFindings.count ?? 0, critical: criticalFindings.count ?? 0, fixing: fixingFindings.count ?? 0, pending: pendingFixes.count ?? 0 },
+    activity: { events: activityEvents, today, errors, adminActions: 0 },
     funnel: events.map((event, index) => ({ label: event.replaceAll("_", " "), count: funnelCounts[index], rate: base ? Math.round((funnelCounts[index] / base) * 100) : 0 })),
     system: { supabase: "healthy", database: "healthy" },
   };

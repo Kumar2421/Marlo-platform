@@ -206,7 +206,7 @@ export async function getPlatformOverview(adminUserId?: string): Promise<Platfor
     usageEvents: usage.count ?? 0,
     build,
     monitor,
-    grow: { leads: leads.count ?? 0, emailReady: emailReady.count ?? 0, sent: sent.count ?? 0, replies: replies.count ?? 0, marketingLeads: marketingLeads.count ?? 0 },
+    grow: { leads: platformLeads.count ?? 0, emailReady: emailReady.count ?? 0, sent: sent.count ?? 0, replies: replies.count ?? 0, marketingLeads: marketingLeads.count ?? 0 },
     fix: { failed: failedFindings.count ?? 0, critical: criticalFindings.count ?? 0, fixing: fixingFindings.count ?? 0, pending: pendingFixes.count ?? 0 },
     activity: { events: activityEvents, today, errors: activityErrors, adminActions: 0 },
     settings: {

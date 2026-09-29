@@ -126,7 +126,6 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     vercel: process.env.VERCEL_TOKEN ? "configured" : "not_configured",
     checkedAt: new Date().toISOString(),
   };
-  const now = Date.now();
   const dayStart = new Date();
   dayStart.setHours(0, 0, 0, 0);
   const activityEvents: ActivityEvent[] = [

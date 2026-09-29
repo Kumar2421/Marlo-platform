@@ -8,9 +8,11 @@ import {
 import type { PlatformOverview } from "@/lib/platform-data";
 import { OverviewFunnel } from "@/components/platform/OverviewFunnel";
 import { OverviewSystem } from "@/components/platform/OverviewSystem";
+import { BuildPanel } from "@/components/platform/BuildPanel";
 
 const nav = [
   ["Overview", LayoutDashboard],
+  ["Build", FolderKanban],
   ["Users", Users],
   ["Projects", FolderKanban],
   ["Outreach", Megaphone],
@@ -21,6 +23,7 @@ const nav = [
 
 const skeletons: Record<string, { stats: string[]; panels: string[] }> = {
   Overview: { stats: ["Users", "Projects", "Leads", "Usage"], panels: ["ACQUISITION FUNNEL", "SYSTEM STATUS"] },
+  Build: { stats: ["CI", "Latest build", "Failures", "Deployment"], panels: ["BUILD PIPELINE", "RELEASE ACTIVITY"] },
   Users: { stats: ["Total users", "New users", "Active users", "Plans"], panels: ["USER DIRECTORY", "USER ACTIVITY"] },
   Projects: { stats: ["Projects", "Active", "Analyses", "Crawls"], panels: ["PROJECT DIRECTORY", "PROJECT ACTIVITY"] },
   Outreach: { stats: ["Leads", "Ready", "Sent", "Replies"], panels: ["OUTREACH PIPELINE", "RECENT ACTIVITY"] },
@@ -40,6 +43,7 @@ export default function PlatformShell({
   const [active, setActive] = useState("Overview");
   const layout = skeletons[active];
   const overviewValues = [overview.users, overview.projects, overview.leads, overview.usageEvents];
+  const buildValues = [overview.build.ci.toUpperCase(), overview.build.latestRun, overview.build.failures, overview.build.deployment === "connected" ? "CONNECTED" : "NOT SET"];
 
   return (
     <main className="platform-shell">
@@ -90,11 +94,11 @@ export default function PlatformShell({
             {layout.stats.map((label, i) => (
               <article className="panel stat" key={label}>
                 <div className="label">{label}</div>
-                <div className="value">{active === "Overview" ? overviewValues[i] : "—"}</div>
+                <div className="value">{active === "Overview" ? overviewValues[i] : active === "Build" ? buildValues[i] : "—"}</div>
                 <div className="note">
                   {active === "Overview"
                     ? ["Registered platform users", "Active customer projects", "Customer-generated leads", "Recorded agent runs"][i]
-                    : "Skeleton — data layer next"}
+                    : "active === "Build" ? ["GitHub Actions state", "Latest workflow", "Recent failed runs", "Vercel integration"][i] : "Skeleton — data layer next""}
                 </div>
               </article>
             ))}
@@ -111,6 +115,8 @@ export default function PlatformShell({
                   <OverviewFunnel stages={overview.funnel} />
                 ) : active === "Overview" && panel === "SYSTEM STATUS" ? (
                   <OverviewSystem system={overview.system} />
+                ) : active === "Build" && panel === "BUILD PIPELINE" ? (
+                  <BuildPanel build={overview.build} />
                 ) : (
                   <div className="empty">
                     <strong>{panel}</strong>

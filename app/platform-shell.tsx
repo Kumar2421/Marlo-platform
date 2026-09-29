@@ -11,6 +11,7 @@ import { OverviewSystem } from "@/components/platform/OverviewSystem";
 import { BuildPanel } from "@/components/platform/BuildPanel";
 import { MonitorPanel } from "@/components/platform/MonitorPanel";
 import { GrowPanel } from "@/components/platform/GrowPanel";
+import { FixPanel } from "@/components/platform/FixPanel";
 
 const nav = [
   ["Overview", LayoutDashboard],
@@ -27,7 +28,7 @@ const skeletons: Record<string, { stats: string[]; panels: string[] }> = {
   Build: { stats: ["CI", "Latest build", "Failures", "Deployment"], panels: ["BUILD PIPELINE", "RELEASE ACTIVITY"] },
   Monitor: { stats: ["Supabase", "Database", "GitHub", "Vercel"], panels: ["SYSTEM HEALTH", "HEALTH CHECK"] },
   Grow: { stats: ["Leads", "Email ready", "Sent", "Replies"], panels: ["OUTREACH PIPELINE", "MARKETING LEADS"] },
-  Fix: { stats: ["Failures", "Incidents", "Retries", "Blocked"], panels: ["FIX QUEUE", "RECOVERY ACTIVITY"] },
+  Fix: { stats: ["Failed", "Critical", "Fixing", "Pending"], panels: ["FIX QUEUE", "RECOVERY ACTIVITY"] },
   Activity: { stats: ["Events", "Today", "Errors", "Admin actions"], panels: ["ACTIVITY STREAM", "EVENT FILTERS"] },
   Settings: { stats: ["Admins", "Access", "Environment", "Config"], panels: ["PLATFORM SETTINGS", "ACCESS CONTROL"] },
 };
@@ -40,6 +41,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
   const buildValues = [overview.build.ci.toUpperCase(), overview.build.latestRun, overview.build.failures, overview.build.deployment === "connected" ? "CONNECTED" : "NOT SET"];
   const monitorValues = [overview.monitor.supabase.toUpperCase(), overview.monitor.database.toUpperCase(), overview.monitor.github.toUpperCase(), overview.monitor.vercel.replaceAll("_", " ").toUpperCase()];
   const growValues = [overview.grow.leads, overview.grow.emailReady, overview.grow.sent, overview.grow.replies];
+  const fixValues = [overview.fix.failed, overview.fix.critical, overview.fix.fixing, overview.fix.pending];
 
   return (
     <main className="platform-shell">
@@ -75,7 +77,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
               <article className="panel stat" key={label}>
                 <div className="label">{label}</div>
                 <div className="value">
-                  {active === "Overview" ? overviewValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : "—"}
+                  {active === "Overview" ? overviewValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : active === "Fix" ? fixValues[i] : "—"}
                 </div>
                 <div className="note">
                   {active === "Overview"
@@ -86,7 +88,9 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
                         ? ["Supabase connection", "Database access", "CI availability", "Deployment integration"][i]
                         : active === "Grow"
                           ? ["Customer lead pool", "Leads with email", "Outreach sent", "Detected replies"][i]
-                          : "Skeleton — data layer next"}
+                          : active === "Fix"
+                            ? ["Findings marked failed", "Active critical findings", "Findings being fixed", "Pending or failed fixes"][i]
+                            : "Skeleton — data layer next"}
                 </div>
               </article>
             ))}

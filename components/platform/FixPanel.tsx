@@ -1,6 +1,6 @@
 import type { FixStatus } from "@/lib/platform-data";
 
-export function FixPanel({ fix }: { fix: FixStatus }) {
+function StatusRow({ label, value, tone = "neutral" }: { label: string; value: number; tone?: "neutral" | "danger" | "warning" }) {\n  return (\n    <div className={`fix-row fix-row-${tone}`}>\n      <span>{label}</span>\n      <strong>{value}</strong>\n    </div>\n  );\n}\n\nexport function FixPanel({ fix }: { fix: FixStatus }) {
   const rows = [
     ["Failed", fix.failed],
     ["Critical active", fix.critical],

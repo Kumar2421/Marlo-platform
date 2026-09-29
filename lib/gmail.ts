@@ -141,6 +141,45 @@ export async function sendGmail(
   return { threadId: data.threadId, messageId: data.id };
 }
 
+
+export async function getGmailThreadReplies(
+  adminUserId: string,
+  threadId: string,
+  ourMessageId: string,
+): Promise<{ id: string; from: string; snippet: string; internalDate: string | null }[]> {
+  const { accessToken } = await getValidGmailAccessToken(adminUserId);
+  const response = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/threads/${encodeURIComponent(threadId)}?format=metadata&metadataHeaders=From&metadataHeaders=Date`,
+    { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" },
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Gmail thread lookup failed: HTTP ${response.status}${detail ? ` — ${detail.slice(0, 200)}` : ""}`);
+  }
+
+  const data = await response.json() as {
+    messages?: Array<{
+      id?: string;
+      internalDate?: string;
+      snippet?: string;
+      payload?: { headers?: Array<{ name?: string; value?: string }> };
+    }>;
+  };
+
+  return (data.messages ?? [])
+    .filter((message) => message.id && message.id !== ourMessageId)
+    .map((message) => {
+      const from = message.payload?.headers?.find((header) => header.name?.toLowerCase() === "from")?.value ?? "";
+      return {
+        id: message.id as string,
+        from,
+        snippet: message.snippet ?? "",
+        internalDate: message.internalDate ?? null,
+      };
+    });
+}
+
 export function hashSecretLabel(value: string) {
   return createHash("sha256").update(value).digest("hex").slice(0, 16);
 }

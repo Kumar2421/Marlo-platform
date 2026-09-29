@@ -23,7 +23,6 @@ export type PlatformOverview = {
 
 export async function getPlatformOverview(): Promise<PlatformOverview> {
   const db = createAdminClient();
-  const monitorStartedAt = Date.now();
   const events = ["audit_started", "audit_completed", "signup_cta_clicked", "signup_completed"];
 
   const [users, projects, leads, funnelEvents, audits, signups, usage, ...funnelQueries] = await Promise.all([

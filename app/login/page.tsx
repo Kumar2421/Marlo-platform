@@ -14,10 +14,11 @@ async function signIn(formData: FormData) {
     redirect("/login?error=1");
   }
 
-  redirect("/");
+  const next = String(formData.get("next") ?? "/");
+  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/");
 }
 
-export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
   const params = await searchParams;
 
   return (
@@ -37,6 +38,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
           <label>
             Password
             <input name="password" type="password" autoComplete="current-password" required />
+          <input name="next" type="hidden" value={params.next ?? "/"} />
           </label>
           <button type="submit">Sign in</button>
         </form>

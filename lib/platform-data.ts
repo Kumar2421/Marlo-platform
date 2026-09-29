@@ -147,7 +147,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 30);
   const today = activityEvents.filter((event) => new Date(event.createdAt).getTime() >= dayStart.getTime()).length;
-  const errors = activityEvents.filter((event) => event.severity === "error").length;
+  const activityErrors = activityEvents.filter((event) => event.severity === "error").length;
   const funnelCounts = funnelQueries.map((query) => query.count ?? 0);
   const base = funnelCounts[0] || 0;
 
@@ -163,7 +163,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     monitor,
     grow: { leads: leads.count ?? 0, emailReady: emailReady.count ?? 0, sent: sent.count ?? 0, replies: replies.count ?? 0, marketingLeads: marketingLeads.count ?? 0 },
     fix: { failed: failedFindings.count ?? 0, critical: criticalFindings.count ?? 0, fixing: fixingFindings.count ?? 0, pending: pendingFixes.count ?? 0 },
-    activity: { events: activityEvents, today, errors, adminActions: 0 },
+    activity: { events: activityEvents, today, errors: activityErrors, adminActions: 0 },
     funnel: events.map((event, index) => ({ label: event.replaceAll("_", " "), count: funnelCounts[index], rate: base ? Math.round((funnelCounts[index] / base) * 100) : 0 })),
     system: { supabase: "healthy", database: "healthy" },
   };

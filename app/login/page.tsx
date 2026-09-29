@@ -38,8 +38,8 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
           <label>
             Password
             <input name="password" type="password" autoComplete="current-password" required />
-          <input name="next" type="hidden" value={params.next ?? "/"} />
           </label>
+          <input name="next" type="hidden" value={params.next ?? "/"} />
           <button type="submit">Sign in</button>
         </form>
 

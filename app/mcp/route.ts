@@ -154,6 +154,11 @@ const tools = [
   },
 ];
 
+export async function GET(req: NextRequest) {
+  const origin = new URL(process.env.MARLO_MCP_ISSUER ?? req.url).origin;
+  return NextResponse.json({ service: "marlo-platform-mcp", status: "ok", endpoint: origin + "/mcp", transport: "streamable-http-jsonrpc" });
+}
+
 export async function POST(req: NextRequest) {
   const auth = await authenticateMcpRequest(req);
   if (!auth) {

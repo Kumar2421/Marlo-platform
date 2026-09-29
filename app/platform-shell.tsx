@@ -12,6 +12,7 @@ import { BuildPanel } from "@/components/platform/BuildPanel";
 import { MonitorPanel } from "@/components/platform/MonitorPanel";
 import { GrowPanel } from "@/components/platform/GrowPanel";
 import { FixPanel } from "@/components/platform/FixPanel";
+import { ActivityPanel } from "@/components/platform/ActivityPanel";
 
 const nav = [
   ["Overview", LayoutDashboard],
@@ -42,6 +43,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
   const monitorValues = [overview.monitor.supabase.toUpperCase(), overview.monitor.database.toUpperCase(), overview.monitor.github.toUpperCase(), overview.monitor.vercel.replaceAll("_", " ").toUpperCase()];
   const growValues = [overview.grow.leads, overview.grow.emailReady, overview.grow.sent, overview.grow.replies];
   const fixValues = [overview.fix.failed, overview.fix.critical, overview.fix.fixing, overview.fix.pending];
+  const activityValues = [overview.activity.events.length, overview.activity.today, overview.activity.errors, overview.activity.adminActions];
 
   return (
     <main className="platform-shell">
@@ -77,7 +79,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
               <article className="panel stat" key={label}>
                 <div className="label">{label}</div>
                 <div className="value">
-                  {active === "Overview" ? overviewValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : active === "Fix" ? fixValues[i] : "—"}
+                  {active === "Overview" ? overviewValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : active === "Fix" ? fixValues[i] : active === "Activity" ? activityValues[i] : "—"}
                 </div>
                 <div className="note">
                   {active === "Overview"
@@ -90,7 +92,9 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
                           ? ["Customer lead pool", "Leads with email", "Outreach sent", "Detected replies"][i]
                           : active === "Fix"
                             ? ["Findings marked failed", "Active critical findings", "Findings being fixed", "Pending or failed fixes"][i]
-                            : "Skeleton — data layer next"}
+                            : active === "Activity"
+                              ? ["Recent platform events", "Events recorded today", "Failed events in stream", "Admin actions tracked"][i]
+                              : "Skeleton — data layer next"}
                 </div>
               </article>
             ))}
@@ -107,6 +111,10 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
                   : active === "Grow" && panel === "OUTREACH PIPELINE" ? <GrowPanel grow={overview.grow} />
                   : active === "Grow" && panel === "MARKETING LEADS" ? (
                     <div className="grow-panel"><div className="grow-row"><span>Inbound marketing leads</span><strong>{overview.grow.marketingLeads}</strong></div><div className="grow-note">Social connections and automated social execution remain a later integration layer.</div></div>
+                  ) : active === "Fix" && panel === "FIX QUEUE" ? <FixPanel fix={overview.fix} />
+                  : active === "Activity" && panel === "ACTIVITY STREAM" ? <ActivityPanel events={overview.activity.events} />
+                  : active === "Activity" && panel === "EVENT FILTERS" ? (
+                    <div className="activity-filters"><span>Sources</span><strong>usage_events · marketing_funnel_events</strong><small>Phase 1 is read-only. Admin action events will be added with the control-plane audit log.</small></div>
                   ) : (
                     <div className="empty"><strong>{panel}</strong><span>UI skeleton ready — implementation follows.</span></div>
                   )}

@@ -98,7 +98,9 @@ export default function PlatformShell({
                 <div className="note">
                   {active === "Overview"
                     ? ["Registered platform users", "Active customer projects", "Customer-generated leads", "Recorded agent runs"][i]
-                    : "active === "Build" ? ["GitHub Actions state", "Latest workflow", "Recent failed runs", "Vercel integration"][i] : "Skeleton — data layer next""}
+                    : active === "Build"
+                      ? ["GitHub Actions state", "Latest workflow", "Recent failed runs", "Vercel integration"][i]
+                      : "Skeleton — data layer next"}
                 </div>
               </article>
             ))}

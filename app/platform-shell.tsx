@@ -14,7 +14,7 @@ import { GrowPanel } from "@/components/platform/GrowPanel";
 import { FixPanel } from "@/components/platform/FixPanel";
 import { ActivityPanel } from "@/components/platform/ActivityPanel";
 import { AccessControlPanel, SettingsPanel } from "@/components/platform/SettingsPanel";
-import { UserDetailPanel, UsersPanel } from "@/components/platform/UsersPanel";
+import { UserDetailPanel, UsersPanel } from "@/components/platform/UsersPanel";\nimport { ProjectDetailPanel, ProjectsPanel } from "@/components/platform/ProjectsPanel";
 
 const nav = [
   ["Overview", LayoutDashboard],
@@ -28,7 +28,7 @@ const nav = [
 ] as const;
 
 const skeletons: Record<string, { stats: string[]; panels: string[] }> = {
-  Users: { stats: ["Users", "Projects", "With projects", "Admin accounts"], panels: ["USER DIRECTORY", "USER DETAIL"] },
+  Users: { stats: ["Users", "Projects", "With projects", "Admin accounts"], panels: ["USER DIRECTORY", "USER DETAIL"] },\n  Projects: { stats: ["Projects", "With owners", "With URL", "Categories"], panels: ["PROJECT DIRECTORY", "PROJECT DETAIL"] },
   Overview: { stats: ["Users", "Projects", "Leads", "Usage"], panels: ["ACQUISITION FUNNEL", "SYSTEM STATUS"] },
   Build: { stats: ["CI", "Latest build", "Failures", "Deployment"], panels: ["BUILD PIPELINE", "RELEASE ACTIVITY"] },
   Monitor: { stats: ["Supabase", "Database", "GitHub", "Vercel"], panels: ["SYSTEM HEALTH", "HEALTH CHECK"] },
@@ -41,11 +41,11 @@ const skeletons: Record<string, { stats: string[]; panels: string[] }> = {
 export default function PlatformShell({ userEmail, overview }: { userEmail: string; overview: PlatformOverview }) {
   const [collapsed, setCollapsed] = useState(false);
   const [active, setActive] = useState("Overview");
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);\n  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const layout = skeletons[active];
   const overviewValues = [overview.users, overview.projects, overview.leads, overview.usageEvents];
   const userValues = [overview.userDirectory.length, overview.projects, overview.userDirectory.filter((user) => user.projects > 0).length, overview.settings.admins];
-  const selectedUser = overview.userDirectory.find((user) => user.id === selectedUserId) ?? overview.userDirectory[0] ?? null;
+  const selectedUser = overview.userDirectory.find((user) => user.id === selectedUserId) ?? overview.userDirectory[0] ?? null;\n  const projectValues = [overview.projectDirectory.length, overview.projectDirectory.filter((project) => project.ownerEmail).length, overview.projectDirectory.filter((project) => project.url).length, new Set(overview.projectDirectory.map((project) => project.category).filter(Boolean)).size];\n  const selectedProject = overview.projectDirectory.find((project) => project.id === selectedProjectId) ?? overview.projectDirectory[0] ?? null;
   const buildValues = [overview.build.ci.toUpperCase(), overview.build.latestRun, overview.build.failures, overview.build.deployment === "connected" ? "CONNECTED" : "NOT SET"];
   const monitorValues = [overview.monitor.supabase.toUpperCase(), overview.monitor.database.toUpperCase(), overview.monitor.github.toUpperCase(), overview.monitor.vercel.replaceAll("_", " ").toUpperCase()];
   const growValues = [overview.grow.leads, overview.grow.emailReady, overview.grow.sent, overview.grow.replies];
@@ -86,7 +86,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
               <article className="panel stat" key={label}>
                 <div className="label">{label}</div>
                 <div className="value">
-                  {active === "Overview" ? overviewValues[i] : active === "Users" ? userValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : active === "Fix" ? fixValues[i] : active === "Activity" ? activityValues[i] : active === "Settings" ? [overview.settings.admins, overview.settings.adminIds ? "READY" : "MISSING", overview.settings.supabase ? "READY" : "MISSING", overview.settings.vercel ? "READY" : "NOT SET"][i] : "—"}
+                  {active === "Overview" ? overviewValues[i] : active === "Users" ? userValues[i] : active === "Projects" ? projectValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : active === "Fix" ? fixValues[i] : active === "Activity" ? activityValues[i] : active === "Settings" ? [overview.settings.admins, overview.settings.adminIds ? "READY" : "MISSING", overview.settings.supabase ? "READY" : "MISSING", overview.settings.vercel ? "READY" : "NOT SET"][i] : "—"}
                 </div>
                 <div className="note">
                   {active === "Overview"
@@ -115,7 +115,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
             {layout.panels.map((panel, i) => (
               <section className="panel" key={panel}>
                 <div className="panelhead"><span>{panel}</span>{i === 0 && <BarChart3 size={14} />}</div>
-                {active === "Users" && panel === "USER DIRECTORY" ? <UsersPanel users={overview.userDirectory} onSelect={setSelectedUserId} />
+                {active === "Users" && panel === "USER DIRECTORY" ? <UsersPanel users={overview.userDirectory} onSelect={setSelectedUserId} />\n                  : active === "Projects" && panel === "PROJECT DIRECTORY" ? <ProjectsPanel projects={overview.projectDirectory} onSelect={setSelectedProjectId} />\n                  : active === "Projects" && panel === "PROJECT DETAIL" ? <ProjectDetailPanel project={selectedProject} />
                   : active === "Users" && panel === "USER DETAIL" ? <UserDetailPanel user={selectedUser} />
                   : active === "Overview" && panel === "ACQUISITION FUNNEL" ? <OverviewFunnel stages={overview.funnel} />
                   : active === "Overview" && panel === "SYSTEM STATUS" ? <OverviewSystem system={overview.system} />

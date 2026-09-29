@@ -1,12 +1,13 @@
 import { requireAdmin } from "@/lib/admin";
 import { getPlatformOverview } from "@/lib/platform-data";
 import PlatformShell from "./platform-shell";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const { user, authorized } = await requireAdmin();
 
   if (!user) {
-    return <main className="access"><div className="access-card"><div className="eyebrow">MARLO / PLATFORM</div><h1>Authentication required</h1><p>Sign in to the Marlo application, then return to the platform control plane.</p></div></main>;
+    redirect("/login");
   }
 
   if (!authorized) {

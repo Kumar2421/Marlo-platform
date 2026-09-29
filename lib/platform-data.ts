@@ -52,6 +52,8 @@ export type SettingsStatus = {
   secretKey: boolean;
   vercel: boolean;
   adminIds: boolean;
+  gmail: boolean;
+  gmailEmail: string | null;
 };
 
 export type PlatformOverview = {
@@ -79,7 +81,7 @@ export type PlatformOverview = {
   system: { supabase: "healthy" | "error"; database: "healthy" | "error" };
 };
 
-export async function getPlatformOverview(): Promise<PlatformOverview> {
+export async function getPlatformOverview(adminUserId?: string): Promise<PlatformOverview> {
   const db = createAdminClient();
   const [{ data: authUsers, error: authUsersError }, { data: projectRows, error: projectRowsError }] = await Promise.all([
     db.auth.admin.listUsers({ page: 1, perPage: 100 }),
@@ -146,6 +148,19 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     }
   } catch {}
 
+  let gmail = false;
+  let gmailEmail: string | null = null;
+  if (adminUserId) {
+    const { data: gmailConnection } = await db.from("integration_connections")
+      .select("external_email")
+      .eq("user_id", adminUserId)
+      .is("project_id", null)
+      .eq("provider", "gmail")
+      .maybeSingle();
+    gmail = Boolean(gmailConnection);
+    gmailEmail = gmailConnection?.external_email ?? null;
+  }
+
   const monitor: MonitorStatus = {
     database: errors.length ? "error" : "healthy",
     supabase: errors.length ? "error" : "healthy",
@@ -199,6 +214,8 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
       secretKey: Boolean(process.env.SUPABASE_SECRET_KEY),
       vercel: Boolean(process.env.VERCEL_TOKEN),
       adminIds: Boolean(process.env.MARLO_ADMIN_USER_IDS?.trim()),
+      gmail,
+      gmailEmail,
     },
     funnel: events.map((event, index) => ({ label: event.replaceAll("_", " "), count: funnelCounts[index], rate: base ? Math.round((funnelCounts[index] / base) * 100) : 0 })),
     system: { supabase: "healthy", database: "healthy" },

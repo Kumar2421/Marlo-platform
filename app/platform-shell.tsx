@@ -6,6 +6,8 @@ import {
   LayoutDashboard, Megaphone, Settings2, ShieldCheck, Users,
 } from "lucide-react";
 import type { PlatformOverview } from "@/lib/platform-data";
+import { OverviewFunnel } from "@/components/platform/OverviewFunnel";
+import { OverviewSystem } from "@/components/platform/OverviewSystem";
 
 const nav = [
   ["Overview", LayoutDashboard],
@@ -105,14 +107,16 @@ export default function PlatformShell({
                   <span>{panel}</span>
                   {i === 0 && <BarChart3 size={14} />}
                 </div>
-                <div className="empty">
-                  <strong>{panel}</strong>
-                  <span>
-                    {active === "Overview"
-                      ? "Live platform data connected."
-                      : "UI skeleton ready — implementation follows."}
-                  </span>
-                </div>
+                {active === "Overview" && panel === "ACQUISITION FUNNEL" ? (
+                  <OverviewFunnel stages={overview.funnel} />
+                ) : active === "Overview" && panel === "SYSTEM STATUS" ? (
+                  <OverviewSystem system={overview.system} />
+                ) : (
+                  <div className="empty">
+                    <strong>{panel}</strong>
+                    <span>UI skeleton ready — implementation follows.</span>
+                  </div>
+                )}
               </section>
             ))}
           </div>

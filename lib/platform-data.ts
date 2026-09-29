@@ -42,6 +42,14 @@ export type ActivityEvent = {
   createdAt: string;
 };
 
+export type SettingsStatus = {
+  admins: number;
+  supabase: boolean;
+  secretKey: boolean;
+  vercel: boolean;
+  adminIds: boolean;
+};
+
 export type PlatformOverview = {
   users: number;
   projects: number;
@@ -60,6 +68,7 @@ export type PlatformOverview = {
     errors: number;
     adminActions: number;
   };
+  settings: SettingsStatus;
   funnel: FunnelStage[];
   system: { supabase: "healthy" | "error"; database: "healthy" | "error" };
 };
@@ -164,6 +173,13 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     grow: { leads: leads.count ?? 0, emailReady: emailReady.count ?? 0, sent: sent.count ?? 0, replies: replies.count ?? 0, marketingLeads: marketingLeads.count ?? 0 },
     fix: { failed: failedFindings.count ?? 0, critical: criticalFindings.count ?? 0, fixing: fixingFindings.count ?? 0, pending: pendingFixes.count ?? 0 },
     activity: { events: activityEvents, today, errors: activityErrors, adminActions: 0 },
+    settings: {
+      admins: (process.env.MARLO_ADMIN_USER_IDS ?? "").split(",").map((v) => v.trim()).filter(Boolean).length,
+      supabase: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+      secretKey: Boolean(process.env.SUPABASE_SECRET_KEY),
+      vercel: Boolean(process.env.VERCEL_TOKEN),
+      adminIds: Boolean(process.env.MARLO_ADMIN_USER_IDS?.trim()),
+    },
     funnel: events.map((event, index) => ({ label: event.replaceAll("_", " "), count: funnelCounts[index], rate: base ? Math.round((funnelCounts[index] / base) * 100) : 0 })),
     system: { supabase: "healthy", database: "healthy" },
   };

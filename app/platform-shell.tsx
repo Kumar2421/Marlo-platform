@@ -13,6 +13,7 @@ import { MonitorPanel } from "@/components/platform/MonitorPanel";
 import { GrowPanel } from "@/components/platform/GrowPanel";
 import { FixPanel } from "@/components/platform/FixPanel";
 import { ActivityPanel } from "@/components/platform/ActivityPanel";
+import { AccessControlPanel, SettingsPanel } from "@/components/platform/SettingsPanel";
 
 const nav = [
   ["Overview", LayoutDashboard],
@@ -79,7 +80,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
               <article className="panel stat" key={label}>
                 <div className="label">{label}</div>
                 <div className="value">
-                  {active === "Overview" ? overviewValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : active === "Fix" ? fixValues[i] : active === "Activity" ? activityValues[i] : "—"}
+                  {active === "Overview" ? overviewValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : active === "Fix" ? fixValues[i] : active === "Activity" ? activityValues[i] : active === "Settings" ? [overview.settings.admins, overview.settings.adminIds ? "READY" : "MISSING", overview.settings.supabase ? "READY" : "MISSING", overview.settings.vercel ? "READY" : "NOT SET"][i] : "—"}
                 </div>
                 <div className="note">
                   {active === "Overview"
@@ -94,7 +95,9 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
                             ? ["Findings marked failed", "Active critical findings", "Findings being fixed", "Pending or failed fixes"][i]
                             : active === "Activity"
                               ? ["Recent platform events", "Events recorded today", "Failed events in stream", "Admin actions tracked"][i]
-                              : "Skeleton — data layer next"}
+                              : active === "Settings"
+                                ? ["Allowlisted admin accounts", "MARLO_ADMIN_USER_IDS", "Supabase server config", "Vercel integration"][i]
+                                : "Skeleton — data layer next"}
                 </div>
               </article>
             ))}
@@ -115,7 +118,9 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
                   : active === "Activity" && panel === "ACTIVITY STREAM" ? <ActivityPanel events={overview.activity.events} />
                   : active === "Activity" && panel === "EVENT FILTERS" ? (
                     <div className="activity-filters"><span>Sources</span><strong>usage_events · marketing_funnel_events</strong><small>Phase 1 is read-only. Admin action events will be added with the control-plane audit log.</small></div>
-                  ) : (
+                  ) : active === "Settings" && panel === "PLATFORM SETTINGS" ? <SettingsPanel settings={overview.settings} />
+                  : active === "Settings" && panel === "ACCESS CONTROL" ? <AccessControlPanel settings={overview.settings} />
+                  : (
                     <div className="empty"><strong>{panel}</strong><span>UI skeleton ready — implementation follows.</span></div>
                   )}
               </section>
@@ -125,7 +130,7 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
       </div>
 
       <nav className="mobile-nav">
-        {nav.slice(0, 5).map(([label, Icon]) => (
+        {nav.map(([label, Icon]) => (
           <button key={label} className={active === label ? "mobile-item active" : "mobile-item"} onClick={() => setActive(label)}>
             <span className="mobile-icon"><Icon size={18} /></span>{label}
           </button>

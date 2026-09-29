@@ -5,6 +5,8 @@ export type FunnelStage = { label: string; count: number; rate: number };
 
 export type BuildStatus = { ci: "success" | "failure" | "running" | "unknown"; latestRun: string; latestRunUrl: string | null; failures: number; deployment: "connected" | "not_configured" };
 
+export type MonitorStatus = { database: "healthy" | "error"; github: "healthy" | "error"; vercel: "configured" | "not_configured"; supabase: "healthy" | "error"; checkedAt: string };
+
 export type PlatformOverview = {
   users: number;
   projects: number;
@@ -14,12 +16,14 @@ export type PlatformOverview = {
   signupsCompleted: number;
   usageEvents: number;
   build: BuildStatus;
+  monitor: MonitorStatus;
   funnel: FunnelStage[];
   system: { supabase: "healthy" | "error"; database: "healthy" | "error" };
 };
 
 export async function getPlatformOverview(): Promise<PlatformOverview> {
   const db = createAdminClient();
+  const monitorStartedAt = Date.now();
   const events = ["audit_started", "audit_completed", "signup_cta_clicked", "signup_completed"];
 
   const [users, projects, leads, funnelEvents, audits, signups, usage, ...funnelQueries] = await Promise.all([
@@ -55,6 +59,14 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     }
   } catch {}
 
+  const monitor: MonitorStatus = {
+    database: errors.length ? "error" : "healthy",
+    supabase: errors.length ? "error" : "healthy",
+    github: build.ci === "unknown" ? "error" : "healthy",
+    vercel: process.env.VERCEL_TOKEN ? "configured" : "not_configured",
+    checkedAt: new Date().toISOString(),
+  };
+
   const funnelCounts = funnelQueries.map((query) => query.count ?? 0);
   const base = funnelCounts[0] || 0;
 
@@ -67,6 +79,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     signupsCompleted: signups.count ?? 0,
     usageEvents: usage.count ?? 0,
     build,
+    monitor,
     funnel: events.map((event, index) => ({
       label: event.replaceAll("_", " "),
       count: funnelCounts[index],

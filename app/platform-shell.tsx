@@ -14,9 +14,11 @@ import { GrowPanel } from "@/components/platform/GrowPanel";
 import { FixPanel } from "@/components/platform/FixPanel";
 import { ActivityPanel } from "@/components/platform/ActivityPanel";
 import { AccessControlPanel, SettingsPanel } from "@/components/platform/SettingsPanel";
+import { UserDetailPanel, UsersPanel } from "@/components/platform/UsersPanel";
 
 const nav = [
   ["Overview", LayoutDashboard],
+  ["Users", Activity],
   ["Build", FolderKanban],
   ["Monitor", ShieldCheck],
   ["Grow", Megaphone],
@@ -26,6 +28,7 @@ const nav = [
 ] as const;
 
 const skeletons: Record<string, { stats: string[]; panels: string[] }> = {
+  Users: { stats: ["Users", "Projects", "With projects", "Admin accounts"], panels: ["USER DIRECTORY", "USER DETAIL"] },
   Overview: { stats: ["Users", "Projects", "Leads", "Usage"], panels: ["ACQUISITION FUNNEL", "SYSTEM STATUS"] },
   Build: { stats: ["CI", "Latest build", "Failures", "Deployment"], panels: ["BUILD PIPELINE", "RELEASE ACTIVITY"] },
   Monitor: { stats: ["Supabase", "Database", "GitHub", "Vercel"], panels: ["SYSTEM HEALTH", "HEALTH CHECK"] },
@@ -38,8 +41,11 @@ const skeletons: Record<string, { stats: string[]; panels: string[] }> = {
 export default function PlatformShell({ userEmail, overview }: { userEmail: string; overview: PlatformOverview }) {
   const [collapsed, setCollapsed] = useState(false);
   const [active, setActive] = useState("Overview");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const layout = skeletons[active];
   const overviewValues = [overview.users, overview.projects, overview.leads, overview.usageEvents];
+  const userValues = [overview.userDirectory.length, overview.projects, overview.userDirectory.filter((user) => user.projects > 0).length, overview.settings.admins];
+  const selectedUser = overview.userDirectory.find((user) => user.id === selectedUserId) ?? overview.userDirectory[0] ?? null;
   const buildValues = [overview.build.ci.toUpperCase(), overview.build.latestRun, overview.build.failures, overview.build.deployment === "connected" ? "CONNECTED" : "NOT SET"];
   const monitorValues = [overview.monitor.supabase.toUpperCase(), overview.monitor.database.toUpperCase(), overview.monitor.github.toUpperCase(), overview.monitor.vercel.replaceAll("_", " ").toUpperCase()];
   const growValues = [overview.grow.leads, overview.grow.emailReady, overview.grow.sent, overview.grow.replies];
@@ -80,11 +86,13 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
               <article className="panel stat" key={label}>
                 <div className="label">{label}</div>
                 <div className="value">
-                  {active === "Overview" ? overviewValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : active === "Fix" ? fixValues[i] : active === "Activity" ? activityValues[i] : active === "Settings" ? [overview.settings.admins, overview.settings.adminIds ? "READY" : "MISSING", overview.settings.supabase ? "READY" : "MISSING", overview.settings.vercel ? "READY" : "NOT SET"][i] : "—"}
+                  {active === "Overview" ? overviewValues[i] : active === "Users" ? userValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : active === "Fix" ? fixValues[i] : active === "Activity" ? activityValues[i] : active === "Settings" ? [overview.settings.admins, overview.settings.adminIds ? "READY" : "MISSING", overview.settings.supabase ? "READY" : "MISSING", overview.settings.vercel ? "READY" : "NOT SET"][i] : "—"}
                 </div>
                 <div className="note">
                   {active === "Overview"
                     ? ["Registered platform users", "Active customer projects", "Customer-generated leads", "Recorded agent runs"][i]
+                    : active === "Users"
+                      ? ["Authenticated users", "Customer projects", "Users with projects", "Platform admins"][i]
                     : active === "Build"
                       ? ["GitHub Actions state", "Latest workflow", "Recent failed runs", "Vercel integration"][i]
                       : active === "Monitor"
@@ -107,7 +115,9 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
             {layout.panels.map((panel, i) => (
               <section className="panel" key={panel}>
                 <div className="panelhead"><span>{panel}</span>{i === 0 && <BarChart3 size={14} />}</div>
-                {active === "Overview" && panel === "ACQUISITION FUNNEL" ? <OverviewFunnel stages={overview.funnel} />
+                {active === "Users" && panel === "USER DIRECTORY" ? <UsersPanel users={overview.userDirectory} />
+                  : active === "Users" && panel === "USER DETAIL" ? <UserDetailPanel user={selectedUser} />
+                  : active === "Overview" && panel === "ACQUISITION FUNNEL" ? <OverviewFunnel stages={overview.funnel} />
                   : active === "Overview" && panel === "SYSTEM STATUS" ? <OverviewSystem system={overview.system} />
                   : active === "Build" && panel === "BUILD PIPELINE" ? <BuildPanel build={overview.build} />
                   : active === "Monitor" && panel === "SYSTEM HEALTH" ? <MonitorPanel monitor={overview.monitor} />

@@ -42,7 +42,7 @@ export type ActivityEvent = {
   createdAt: string;
 };
 
-export type PlatformUser = { id: string; email: string | null; createdAt: string; projects: number };
+export type PlatformUser = { id: string; email: string | null; createdAt: string; projects: number };\n\nexport type PlatformProject = { id: string; ownerId: string; ownerEmail: string | null; name: string | null; url: string | null; category: string | null; createdAt: string };
 
 export type SettingsStatus = {
   admins: number;

@@ -10,17 +10,17 @@ function StatusRow({ label, value, tone = "neutral" }: { label: string; value: n
 }
 
 export function FixPanel({ fix }: { fix: FixStatus }) {
-  const rows = [
-    ["Failed", fix.failed, "danger" as const],
-    ["Critical active", fix.critical, "danger" as const],
-    ["Currently fixing", fix.fixing, "warning" as const],
-    ["Pending fixes", fix.pending, "warning" as const],
+  const rows: Array<{ label: string; value: number; tone: "neutral" | "danger" | "warning" }> = [
+    { label: "Failed", value: fix.failed, tone: "danger" },
+    { label: "Critical active", value: fix.critical, tone: "danger" },
+    { label: "Currently fixing", value: fix.fixing, tone: "warning" },
+    { label: "Pending fixes", value: fix.pending, tone: "warning" },
   ];
 
   return (
     <div className="fix-panel">
-      {rows.map(([label, value, tone]) => (
-        <StatusRow key={label} label={label} value={value as number} tone={tone} />
+      {rows.map(({ label, value, tone }) => (
+        <StatusRow key={label} label={label} value={value} tone={tone} />
       ))}
       <div className="fix-note">
         Recovery is data-driven from findings and code_fixes. Destructive actions and automatic retries remain disabled in phase 1.

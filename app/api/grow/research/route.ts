@@ -1,52 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient, requireAdmin } from "@/lib/admin";
-import { leadDedupeKey, researchLeads, type ResearchQuery } from "@/lib/lead-research";
+import { adminRoute, readJson } from "@/lib/api";
+import { researchLeads, type ResearchQuery } from "@/lib/lead-research";
+import { importLeads, listLeads, LEAD_COLUMNS } from "@/lib/services/leads";
+import { clean, ServiceError } from "@/lib/services/types";
+import { createAdminClient } from "@/lib/admin";
 
-function clean(value: unknown, max = 160) {
-  return typeof value === "string" ? value.trim().slice(0, max) : "";
-}
+export const maxDuration = 60;
 
-export async function GET() {
-  const { user, authorized } = await requireAdmin();
-  if (!user || !authorized) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const GET = adminRoute(async () => ({ leads: (await listLeads({ limit: 100 })).leads }));
 
-  const db = createAdminClient();
-  const { data, error } = await db.from("leads")
-    .select("id,name,title,company,location,email,email_quality,email_verified,source_url,query,created_at,email_status,emailed_at,last_reply_at")
-    .eq("scope", "platform").order("created_at", { ascending: false }).limit(100);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ leads: data ?? [] });
-}
-
-export async function POST(req: NextRequest) {
-  const { user, authorized } = await requireAdmin();
-  if (!user || !authorized) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }); }
-  const payload = body as Record<string, unknown>;
+export const POST = adminRoute(async (actor, req) => {
+  const payload = await readJson(req);
   const query: ResearchQuery = { role: clean(payload.role, 100), companyOrIndustry: clean(payload.companyOrIndustry, 120), location: clean(payload.location, 120) };
-  if (!query.role || !query.companyOrIndustry) return NextResponse.json({ error: "Role and company/industry are required." }, { status: 400 });
+  if (!query.role || !query.companyOrIndustry) throw new ServiceError("Role and company/industry are required.");
 
-  try {
-    const result = await researchLeads(query);
-    const rows = result.leads.map((lead) => ({
-      user_id: user.id, project_id: null, scope: "platform", name: lead.name, title: lead.title || null,
-      company: lead.company || null, location: lead.location || null, email: lead.email,
-      email_quality: lead.email ? "source_found" : null, email_verified: false, source_url: lead.sourceUrl,
-      query: JSON.stringify(query), lead_type: "person", dedupe_key: leadDedupeKey(lead),
-    }));
-    const db = createAdminClient();
-    if (rows.length) {
-      const { error } = await db.from("leads").upsert(rows, { onConflict: "scope,dedupe_key", ignoreDuplicates: true });
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    const { data: saved, error: readError } = await db.from("leads")
-      .select("id,name,title,company,location,email,email_quality,email_verified,source_url,query,created_at,email_status,emailed_at,last_reply_at")
-      .eq("scope", "platform").order("created_at", { ascending: false }).limit(100);
-    if (readError) return NextResponse.json({ error: readError.message }, { status: 500 });
-    return NextResponse.json({ leads: saved ?? [], found: result.leads.length, searches: result.searches, results: result.results });
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Lead research failed." }, { status: 500 });
+  const result = await researchLeads(query);
+  if (result.leads.length) {
+    await importLeads(actor, result.leads.map((l) => ({
+      name: l.name, title: l.title, company: l.company, location: l.location, email: l.email ?? undefined, source_url: l.sourceUrl ?? undefined,
+    })), { query: JSON.stringify(query) });
   }
-}
+  const db = createAdminClient();
+  const { data, error } = await db.from("leads").select(LEAD_COLUMNS).eq("scope", "platform").order("created_at", { ascending: false }).limit(100);
+  if (error) throw new Error(error.message);
+  return { leads: data ?? [], found: result.leads.length, searches: result.searches, results: result.results };
+}, "leads.research");

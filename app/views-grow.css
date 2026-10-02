@@ -1,0 +1,28 @@
+/* Grow dashboard (components/platform/grow). Prefix: gw- */
+.gw-tabs-wrap{padding:0 14px}
+.gw-tabs-wrap .pf-tabs{margin:0 -4px;border-bottom:0}
+.gw-pad{padding:10px 14px}
+.gw-help{margin:0;line-height:1.5}
+.gw-tagfilter{width:110px}
+.gw-bulk{background:#f7f7f7;border:1px solid #ececec;border-radius:8px;padding:8px}
+.gw-click{cursor:pointer}
+.gw-click:hover strong{text-decoration:underline}
+.gw-form2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gw-form3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.gw-meta{display:flex;flex-wrap:wrap;gap:4px 14px}
+.gw-reply{background:#eef4ff;border:1px solid #d1defa;border-radius:8px;padding:10px}
+.gw-reply p,.gw-snippet{margin:6px 0 0;font-size:12px;line-height:1.5;white-space:pre-wrap}
+.gw-reasons{margin:6px 0 0;padding-left:18px;font-size:11px;line-height:1.5}
+.gw-audience{border:1px solid #ececec;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.gw-preview{border:1px solid #ececec;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.gw-gmail a{text-decoration:underline;color:inherit;font-weight:500}
+.gw-err{color:#b42318;font-size:11px;min-width:160px}
+.gw-chips{display:flex;flex-wrap:wrap;gap:6px}
+.gw-chip{border:1px solid #dcdcdc;background:#fff;border-radius:999px;padding:4px 11px;font:500 10px var(--font-jetbrains),monospace;text-transform:uppercase;letter-spacing:.04em;color:#737373;cursor:pointer}
+.gw-chip.active{background:#171717;border-color:#171717;color:#fff}
+.gw-reply-card{border:1px solid #ececec;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+@media(max-width:767px){
+  .gw-form2,.gw-form3{grid-template-columns:1fr}
+  .gw-tabs-wrap{padding:0 11px}
+  .gw-tagfilter{width:100%}
+}

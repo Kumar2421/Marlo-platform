@@ -1,0 +1,34 @@
+.ov-trends{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.ov-trend{min-width:0}
+.ov-trend-head{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-bottom:8px;font:500 9px var(--font-jetbrains),monospace;letter-spacing:.05em;text-transform:uppercase;color:#8a8a8a}
+.ov-trend-head b{font-size:16px;color:#171717;font-weight:500}
+.ov-spark{display:flex;align-items:flex-end;gap:2px;height:48px}
+.ov-spark>i{flex:1;min-width:2px;background:#cfeee9;border-radius:2px 2px 0 0;min-height:2px}
+.ov-spark>i.zero{background:#ececec}
+.ov-spark>i.last{background:#00ab92}
+.ov-funnel-row{display:grid;grid-template-columns:minmax(80px,140px) 1fr auto;align-items:center;gap:10px;padding:6px 0;font-size:12px}
+.ov-funnel-row .pf-bar{height:8px}
+.ov-funnel-num{font:500 11px var(--font-jetbrains),monospace;text-align:right;white-space:nowrap}
+.ov-attn{display:flex;flex-direction:column;gap:6px}
+.ov-link{border:0;background:none;padding:0;color:#007a69;font:500 10px var(--font-jetbrains),monospace;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.ov-link:hover{text-decoration:underline}
+.ov-feed{list-style:none;margin:0;padding:0}
+.ov-feed li{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f0f0f0;font-size:12px}
+.ov-feed li:last-child{border-bottom:0}
+.ov-feed .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-feed .when{font:500 10px var(--font-jetbrains),monospace;color:#999;white-space:nowrap}
+.ov-dot{width:8px;height:8px;border-radius:50%;background:#00ab92;flex:0 0 auto}
+.ov-dot.warning{background:#e0a100}.ov-dot.error{background:#d92d20}.ov-dot.info{background:#b5b5b5}
+.ov-kv{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:12px}
+.ov-kv:last-child{border-bottom:0}
+.ov-sub{color:#999;font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.ov-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ov-chip{border:1px solid #dcdcdc;background:#fff;border-radius:999px;padding:5px 11px;font:500 10px var(--font-jetbrains),monospace;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;color:#555}
+.ov-chip.active{background:#171717;color:#fff;border-color:#171717}
+.ov-uptime{display:flex;align-items:center;gap:8px;min-width:120px}
+.ov-uptime .pf-bar{flex:1}
+.ov-wrap{white-space:normal!important;word-break:break-word}
+@media(max-width:767px){
+  .ov-trends{grid-template-columns:1fr 1fr}
+  .ov-funnel-row{grid-template-columns:90px 1fr auto}
+}

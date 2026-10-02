@@ -1,70 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import {
-  Activity, BarChart3, ChevronLeft, ChevronRight, FolderKanban,
-  LayoutDashboard, Megaphone, Settings2, ShieldCheck,
+  Activity, ChevronLeft, ChevronRight, FolderKanban, GitBranch, HeartPulse, LayoutDashboard,
+  Megaphone, Settings2, Users, Wrench,
 } from "lucide-react";
-import type { PlatformOverview } from "@/lib/platform-data";
-import { OverviewFunnel } from "@/components/platform/OverviewFunnel";
-import { OverviewSystem } from "@/components/platform/OverviewSystem";
-import { BuildPanel } from "@/components/platform/BuildPanel";
-import { MonitorPanel } from "@/components/platform/MonitorPanel";
-import { GrowPanel } from "@/components/platform/GrowPanel";
-import { LeadResearchPanel } from "@/components/platform/LeadResearchPanel";
-import { FixPanel } from "@/components/platform/FixPanel";
-import { ActivityPanel } from "@/components/platform/ActivityPanel";
-import { AccessControlPanel, SettingsPanel } from "@/components/platform/SettingsPanel";
-import { UserDetailPanel, UsersPanel } from "@/components/platform/UsersPanel";
-import { ProjectDetailPanel, ProjectsPanel } from "@/components/platform/ProjectsPanel";
+import { OverviewView } from "@/components/platform/views/OverviewView";
+import { UsersView } from "@/components/platform/views/UsersView";
+import { ProjectsView } from "@/components/platform/views/ProjectsView";
+import { BuildView } from "@/components/platform/views/BuildView";
+import { MonitorView } from "@/components/platform/views/MonitorView";
+import { GrowView } from "@/components/platform/views/GrowView";
+import { FixView } from "@/components/platform/views/FixView";
+import { ActivityView } from "@/components/platform/views/ActivityView";
+import { SettingsView } from "@/components/platform/views/SettingsView";
 
-const nav = [
-  ["Overview", LayoutDashboard],
-  ["Users", Activity],
-  ["Projects", FolderKanban],
-  ["Build", FolderKanban],
-  ["Monitor", ShieldCheck],
-  ["Grow", Megaphone],
-  ["Fix", Activity],
-  ["Activity", Activity],
-  ["Settings", Settings2],
-] as const;
+const tabs: { id: string; label: string; icon: ComponentType<{ size?: number }>; view: ComponentType }[] = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard, view: OverviewView },
+  { id: "users", label: "Users", icon: Users, view: UsersView },
+  { id: "projects", label: "Projects", icon: FolderKanban, view: ProjectsView },
+  { id: "build", label: "Build", icon: GitBranch, view: BuildView },
+  { id: "monitor", label: "Monitor", icon: HeartPulse, view: MonitorView },
+  { id: "grow", label: "Grow", icon: Megaphone, view: GrowView },
+  { id: "fix", label: "Fix", icon: Wrench, view: FixView },
+  { id: "activity", label: "Activity", icon: Activity, view: ActivityView },
+  { id: "settings", label: "Settings", icon: Settings2, view: SettingsView },
+];
 
-const skeletons: Record<string, { stats: string[]; panels: string[] }> = {
-  Users: { stats: ["Users", "Projects", "With projects", "Admin accounts"], panels: ["USER DIRECTORY", "USER DETAIL"] },
-  Projects: { stats: ["Projects", "With owners", "With URL", "Categories"], panels: ["PROJECT DIRECTORY", "PROJECT DETAIL"] },
-  Overview: { stats: ["Users", "Projects", "Leads", "Usage"], panels: ["ACQUISITION FUNNEL", "SYSTEM STATUS"] },
-  Build: { stats: ["CI", "Latest build", "Failures", "Deployment"], panels: ["BUILD PIPELINE", "RELEASE ACTIVITY"] },
-  Monitor: { stats: ["Supabase", "Database", "GitHub", "Vercel"], panels: ["SYSTEM HEALTH", "HEALTH CHECK"] },
-  Grow: { stats: ["Platform leads", "Email ready", "Sent", "Replies"], panels: ["LEAD RESEARCH", "OUTREACH PIPELINE"] },
-  Fix: { stats: ["Failed", "Critical", "Fixing", "Pending"], panels: ["FIX QUEUE", "RECOVERY ACTIVITY"] },
-  Activity: { stats: ["Events", "Today", "Errors", "Admin actions"], panels: ["ACTIVITY STREAM", "EVENT FILTERS"] },
-  Settings: { stats: ["Admins", "Access", "Environment", "Config"], panels: ["PLATFORM SETTINGS", "ACCESS CONTROL"] },
-};
+function fromHash() {
+  if (typeof window === "undefined") return "overview";
+  const id = window.location.hash.replace("#", "").split("/")[0];
+  return tabs.some((tab) => tab.id === id) ? id : "overview";
+}
 
-export default function PlatformShell({ userEmail, overview }: { userEmail: string; overview: PlatformOverview }) {
+export default function PlatformShell({ userEmail }: { userEmail: string }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [active, setActive] = useState("Overview");
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const layout = skeletons[active];
-  const overviewValues = [overview.users, overview.projects, overview.leads, overview.usageEvents];
-  const userValues = [overview.userDirectory.length, overview.projects, overview.userDirectory.filter((user) => user.projects > 0).length, overview.settings.admins];
-  const selectedUser = overview.userDirectory.find((user) => user.id === selectedUserId) ?? overview.userDirectory[0] ?? null;
-  const projectValues = [overview.projectDirectory.length, overview.projectDirectory.filter((project) => project.ownerEmail).length, overview.projectDirectory.filter((project) => project.url).length, new Set(overview.projectDirectory.map((project) => project.category).filter(Boolean)).size];
-  const selectedProject = overview.projectDirectory.find((project) => project.id === selectedProjectId) ?? overview.projectDirectory[0] ?? null;
-  const buildValues = [overview.build.ci.toUpperCase(), overview.build.latestRun, overview.build.failures, overview.build.deployment === "connected" ? "CONNECTED" : "NOT SET"];
-  const monitorValues = [overview.monitor.supabase.toUpperCase(), overview.monitor.database.toUpperCase(), overview.monitor.github.toUpperCase(), overview.monitor.vercel.replaceAll("_", " ").toUpperCase()];
-  const growValues = [overview.grow.leads, overview.grow.emailReady, overview.grow.sent, overview.grow.replies];
-  const fixValues = [overview.fix.failed, overview.fix.critical, overview.fix.fixing, overview.fix.pending];
-  const activityValues = [overview.activity.events.length, overview.activity.today, overview.activity.errors, overview.activity.adminActions];
+  const [active, setActive] = useState("overview");
+
+  useEffect(() => {
+    setActive(fromHash());
+    const onHash = () => setActive(fromHash());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  function select(id: string) {
+    setActive(id);
+    window.history.replaceState(null, "", `#${id}`);
+  }
+
+  const current = tabs.find((tab) => tab.id === active) ?? tabs[0];
+  const View = current.view;
 
   return (
     <main className="platform-shell">
       <div className="platform-terminal-wrap">
         <header className="platform-terminal">
           <div className="terminal-left"><i className="dot" /><span>MARLO</span><span className="muted">/ PLATFORM</span></div>
-          <div className="terminal-right"><span>CONTROL PLANE</span><span className="muted">PHASE 1</span></div>
+          <div className="terminal-right"><span>CONTROL PLANE</span><span className="muted">MCP + ADMIN</span></div>
         </header>
       </div>
 
@@ -74,8 +67,8 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
             {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
           </button>
           <nav className="nav">
-            {nav.map(([label, Icon]) => (
-              <button key={label} className={active === label ? "item active" : "item"} onClick={() => setActive(label)} title={collapsed ? label : undefined}>
+            {tabs.map(({ id, label, icon: Icon }) => (
+              <button key={id} className={active === id ? "item active" : "item"} onClick={() => select(id)} title={collapsed ? label : undefined}>
                 <span className="icon"><Icon size={15} /></span><span className="nav-label">{label}</span>
               </button>
             ))}
@@ -84,74 +77,16 @@ export default function PlatformShell({ userEmail, overview }: { userEmail: stri
 
         <section className="workspace">
           <div className="head">
-            <div><div className="eyebrow">PLATFORM / {active.toUpperCase()}</div><h1>{active}</h1></div>
+            <div><div className="eyebrow">PLATFORM / {current.label.toUpperCase()}</div><h1>{current.label}</h1></div>
             <div className="operator"><i className="dot" /> {userEmail}</div>
           </div>
-
-          <div className="stats">
-            {layout.stats.map((label, i) => (
-              <article className="panel stat" key={label}>
-                <div className="label">{label}</div>
-                <div className="value">
-                  {active === "Overview" ? overviewValues[i] : active === "Users" ? userValues[i] : active === "Projects" ? projectValues[i] : active === "Build" ? buildValues[i] : active === "Monitor" ? monitorValues[i] : active === "Grow" ? growValues[i] : active === "Fix" ? fixValues[i] : active === "Activity" ? activityValues[i] : active === "Settings" ? [overview.settings.admins, overview.settings.adminIds ? "READY" : "MISSING", overview.settings.supabase ? "READY" : "MISSING", overview.settings.vercel ? "READY" : "NOT SET"][i] : "—"}
-                </div>
-                <div className="note">
-                  {active === "Overview"
-                    ? ["Registered platform users", "Active customer projects", "Customer-generated leads", "Recorded agent runs"][i]
-                    : active === "Users"
-                      ? ["Authenticated users", "Customer projects", "Users with projects", "Platform admins"][i]
-                    : active === "Build"
-                      ? ["GitHub Actions state", "Latest workflow", "Recent failed runs", "Vercel integration"][i]
-                      : active === "Monitor"
-                        ? ["Supabase connection", "Database access", "CI availability", "Deployment integration"][i]
-                        : active === "Grow"
-                          ? ["Platform acquisition leads", "Leads with sourced email", "Outreach sent", "Detected replies"][i]
-                          : active === "Fix"
-                            ? ["Findings marked failed", "Active critical findings", "Findings being fixed", "Pending or failed fixes"][i]
-                            : active === "Activity"
-                              ? ["Recent platform events", "Events recorded today", "Failed events in stream", "Admin actions tracked"][i]
-                              : active === "Settings"
-                                ? ["Allowlisted admin accounts", "MARLO_ADMIN_USER_IDS", "Supabase server config", "Vercel integration"][i]
-                                : "Skeleton — data layer next"}
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <div className="grid">
-            {layout.panels.map((panel, i) => (
-              <section className="panel" key={panel}>
-                <div className="panelhead"><span>{panel}</span>{i === 0 && <BarChart3 size={14} />}</div>
-                {active === "Users" && panel === "USER DIRECTORY" ? <UsersPanel users={overview.userDirectory} onSelect={setSelectedUserId} />
-                  : active === "Projects" && panel === "PROJECT DIRECTORY" ? <ProjectsPanel projects={overview.projectDirectory} onSelect={setSelectedProjectId} />
-                  : active === "Projects" && panel === "PROJECT DETAIL" ? <ProjectDetailPanel project={selectedProject} />
-                  : active === "Users" && panel === "USER DETAIL" ? <UserDetailPanel user={selectedUser} />
-                  : active === "Overview" && panel === "ACQUISITION FUNNEL" ? <OverviewFunnel stages={overview.funnel} />
-                  : active === "Overview" && panel === "SYSTEM STATUS" ? <OverviewSystem system={overview.system} />
-                  : active === "Build" && panel === "BUILD PIPELINE" ? <BuildPanel build={overview.build} />
-                  : active === "Monitor" && panel === "SYSTEM HEALTH" ? <MonitorPanel monitor={overview.monitor} />
-                  : active === "Grow" && panel === "LEAD RESEARCH" ? <LeadResearchPanel />
-                  : active === "Grow" && panel === "OUTREACH PIPELINE" ? <GrowPanel grow={overview.grow} />
-                  : active === "Grow" && panel === "MARKETING LEADS" ? (
-                    <div className="grow-panel"><div className="grow-row"><span>Inbound marketing leads</span><strong>{overview.grow.marketingLeads}</strong></div><div className="grow-note">Social connections and automated social execution remain a later integration layer.</div></div>
-                  ) : active === "Fix" && panel === "FIX QUEUE" ? <FixPanel fix={overview.fix} />
-                  : active === "Activity" && panel === "ACTIVITY STREAM" ? <ActivityPanel events={overview.activity.events} />
-                  : active === "Activity" && panel === "EVENT FILTERS" ? (
-                    <div className="activity-filters"><span>Sources</span><strong>usage_events · marketing_funnel_events</strong><small>Phase 1 is read-only. Admin action events will be added with the control-plane audit log.</small></div>
-                  ) : active === "Settings" && panel === "PLATFORM SETTINGS" ? <SettingsPanel settings={overview.settings} />
-                  : active === "Settings" && panel === "ACCESS CONTROL" ? <AccessControlPanel settings={overview.settings} />
-                  : (
-                    <div className="empty"><strong>{panel}</strong><span>UI skeleton ready — implementation follows.</span></div>
-                  )}
-              </section>
-            ))}
-          </div>
+          <div className="pf-stack"><View key={current.id} /></div>
         </section>
       </div>
 
       <nav className="mobile-nav">
-        {nav.map(([label, Icon]) => (
-          <button key={label} className={active === label ? "mobile-item active" : "mobile-item"} onClick={() => setActive(label)}>
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <button key={id} className={active === id ? "mobile-item active" : "mobile-item"} onClick={() => select(id)}>
             <span className="mobile-icon"><Icon size={18} /></span>{label}
           </button>
         ))}

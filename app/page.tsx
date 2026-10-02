@@ -1,5 +1,4 @@
 import { requireAdmin } from "@/lib/admin";
-import { getPlatformOverview } from "@/lib/platform-data";
 import PlatformShell from "./platform-shell";
 import { redirect } from "next/navigation";
 
@@ -14,6 +13,5 @@ export default async function Home() {
     return <main className="access"><div className="access-card"><div className="eyebrow">MARLO / PLATFORM</div><h1>403 — Admin access required</h1><p>Your account is authenticated but is not in the platform administrator allowlist.</p></div></main>;
   }
 
-  const overview = await getPlatformOverview(user.id);
-  return <PlatformShell userEmail={user.email ?? "operator"} overview={overview} />;
+  return <PlatformShell userEmail={user.email ?? "operator"} />;
 }

@@ -115,10 +115,13 @@ export async function sendGmail(
   const { accessToken, fromEmail } = await getValidGmailAccessToken(adminUserId);
   if (!fromEmail) throw new Error("Connected Gmail account has no sender address.");
 
+  const safe = (value: string) => value.replace(/[\r\n]+/g, " ").trim();
+  const encodedSubject = /^[\x20-\x7e]*$/.test(subject) ? safe(subject) : `=?UTF-8?B?${Buffer.from(safe(subject), "utf8").toString("base64")}?=`;
   const message = [
-    `From: ${fromEmail}`,
-    `To: ${to}`,
-    `Subject: ${subject}`,
+    `From: ${safe(fromEmail)}`,
+    `To: ${safe(to)}`,
+    `Subject: ${encodedSubject}`,
+    "MIME-Version: 1.0",
     "Content-Type: text/plain; charset=utf-8",
     "",
     body,
@@ -147,7 +150,7 @@ export async function getGmailThreadReplies(
   threadId: string,
   ourMessageId: string,
 ): Promise<{ id: string; from: string; snippet: string; internalDate: string | null }[]> {
-  const { accessToken } = await getValidGmailAccessToken(adminUserId);
+  const { accessToken, fromEmail } = await getValidGmailAccessToken(adminUserId);
   const response = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/threads/${encodeURIComponent(threadId)}?format=metadata&metadataHeaders=From&metadataHeaders=Date`,
     { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" },
@@ -168,9 +171,12 @@ export async function getGmailThreadReplies(
   };
 
   return (data.messages ?? [])
-    .filter((message) => message.id && message.id !== ourMessageId)
-    .map((message) => {
-      const from = message.payload?.headers?.find((header) => header.name?.toLowerCase() === "from")?.value ?? "";
+    .map((message) => ({
+      message,
+      from: message.payload?.headers?.find((header) => header.name?.toLowerCase() === "from")?.value ?? "",
+    }))
+    .filter(({ message, from }) => message.id && message.id !== ourMessageId && !(fromEmail && from.toLowerCase().includes(fromEmail.toLowerCase())))
+    .map(({ message, from }) => {
       return {
         id: message.id as string,
         from,

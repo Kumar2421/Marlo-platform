@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/admin";
+import { getActivity } from "@/lib/services/platform";
 
 export type FunnelStage = { label: string; count: number; rate: number };
 
@@ -134,7 +135,7 @@ export async function getPlatformOverview(adminUserId?: string): Promise<Platfor
 
   let build: BuildStatus = { ci: "unknown", latestRun: "Unavailable", latestRunUrl: null, failures: 0, deployment: process.env.VERCEL_TOKEN ? "connected" : "not_configured" };
   try {
-    const response = await fetch("https://api.github.com/repos/Kumar2421/Marlo-platform/actions/runs?per_page=20", { headers: { Accept: "application/vnd.github+json" }, cache: "no-store" });
+    const response = await fetch("https://api.github.com/repos/Kumar2421/Marlo-platform/actions/runs?per_page=20", { headers: { Accept: "application/vnd.github+json", ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}) }, cache: "no-store" });
     if (response.ok) {
       const payload = await response.json();
       const runs = Array.isArray(payload.workflow_runs) ? payload.workflow_runs : [];
@@ -171,24 +172,8 @@ export async function getPlatformOverview(adminUserId?: string): Promise<Platfor
   };
   const dayStart = new Date();
   dayStart.setHours(0, 0, 0, 0);
-  const activityEvents: ActivityEvent[] = [
-    ...(activityUsage.data ?? []).map((event: { id: string; user_id: string; project_id: string | null; agent_type: string; status: string; created_at: string }) => ({
-      id: `usage-${event.id}`,
-      label: `${event.agent_type} · ${event.status}`,
-      source: "usage_events",
-      severity: event.status === "failed" ? "error" as const : "info" as const,
-      projectId: event.project_id,
-      createdAt: event.created_at,
-    })),
-    ...(activityFunnel.data ?? []).map((event: { id: string; event: string; created_at: string }) => ({
-      id: `funnel-${event.id}`,
-      label: event.event.replaceAll("_", " "),
-      source: "marketing_funnel_events",
-      severity: event.event === "audit_failed" ? "error" as const : "info" as const,
-      projectId: null,
-      createdAt: event.created_at,
-    })),
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 30);
+  const activityEvents: ActivityEvent[] = await getActivity({ limit: 30 });
+  const { count: adminActions } = await db.from("platform_audit_log").select("id", { count: "exact", head: true }).gte("created_at", dayStart.toISOString());
   const today = activityEvents.filter((event) => new Date(event.createdAt).getTime() >= dayStart.getTime()).length;
   const activityErrors = activityEvents.filter((event) => event.severity === "error").length;
   const funnelCounts = funnelQueries.map((query) => query.count ?? 0);
@@ -208,11 +193,11 @@ export async function getPlatformOverview(adminUserId?: string): Promise<Platfor
     monitor,
     grow: { leads: platformLeads.count ?? 0, emailReady: emailReady.count ?? 0, sent: sent.count ?? 0, replies: replies.count ?? 0, marketingLeads: marketingLeads.count ?? 0 },
     fix: { failed: failedFindings.count ?? 0, critical: criticalFindings.count ?? 0, fixing: fixingFindings.count ?? 0, pending: pendingFixes.count ?? 0 },
-    activity: { events: activityEvents, today, errors: activityErrors, adminActions: 0 },
+    activity: { events: activityEvents, today, errors: activityErrors, adminActions: adminActions ?? 0 },
     settings: {
       admins: (process.env.MARLO_ADMIN_USER_IDS ?? "").split(",").map((v) => v.trim()).filter(Boolean).length,
-      supabase: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
-      secretKey: Boolean(process.env.SUPABASE_SECRET_KEY),
+      supabase: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && process.env.MARLO_SUPABASE_URL),
+      secretKey: Boolean(process.env.MARLO_SUPABASE_SECRET_KEY),
       vercel: Boolean(process.env.VERCEL_TOKEN),
       adminIds: Boolean(process.env.MARLO_ADMIN_USER_IDS?.trim()),
       gmail,
